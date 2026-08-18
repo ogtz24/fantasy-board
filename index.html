@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fantasy Draft 2026</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --sub: #94a3b8;
+      --accent: #3b82f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 12px 0;
+      color: #60a5fa;
+      text-align: center;
+    }
+    .controls {
+      width: 100%;
+      max-width: 480px;
+      position: sticky;
+      top: 0;
+      background-color: var(--bg);
+      padding: 8px 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: var(--card);
+      color: white;
+      font-size: 1rem;
+      outline: none;
+    }
+    .filters {
+      display: flex;
+      gap: 6px;
+    }
+    .filter-btn {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      background: #334155;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+    }
+    .list {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .card {
+      background-color: var(--card);
+      padding: 12px 14px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      border-left: 4px solid var(--accent);
+      transition: opacity 0.2s, background-color 0.2s;
+    }
+    .card.QB { border-left-color: #ef4444; }
+    .card.RB { border-left-color: #22c55e; }
+    .card.WR { border-left-color: #3b82f6; }
+    .card.TE { border-left-color: #eab308; }
+    .card.drafted {
+      background-color: #0b0f19;
+      opacity: 0.35;
+      border-left-color: #475569;
+      text-decoration: line-through;
+    }
+    .card-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rank {
+      font-weight: bold;
+      color: var(--sub);
+      font-size: 1.1rem;
+      min-width: 24px;
+    }
+    .name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .sub {
+      font-size: 0.8rem;
+      color: var(--sub);
+    }
+    .box {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #64748b;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+    .card.drafted .box {
+      background: #64748b;
+      color: white;
+    }
+    .reset {
+      margin: 24px 0;
+      padding: 8px 16px;
+      background: #e11d48;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Fantasy Draft Board 2026</h1>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Buscar jugador..." oninput="render()">
+    <div class="filters">
+      <button class="filter-btn active" onclick="setPos('ALL')">ALL</button>
+      <button class="filter-btn" onclick="setPos('QB')">QB</button>
+      <button class="filter-btn" onclick="setPos('RB')">RB</button>
+      <button class="filter-btn" onclick="setPos('WR')">WR</button>
+      <button class="filter-btn" onclick="setPos('TE')">TE</button>
+    </div>
+  </div>
+
+  <div class="list" id="playerList"></div>
+
+  <button class="reset" onclick="clearAll()">Reiniciar Selecciones</button>
+
+  <script>
+    const players = [
+      { id: 1, rank: 1, name: "Jahmyr Gibbs", pos: "RB", team: "DET" },
+      { id: 2, rank: 2, name: "Bijan Robinson", pos: "RB", team: "ATL" },
+      { id: 3, rank: 3, name: "Ja'Marr Chase", pos: "WR", team: "CIN" },
+      { id: 4, rank: 4, name: "Puka Nacua", pos: "WR", team: "LAR" },
+      { id: 5, rank: 5, name: "Christian McCaffrey", pos: "RB", team: "SF" },
+      { id: 6, rank: 6, name: "Jaxon Smith-Njigba", pos: "WR", team: "SEA" },
+      { id: 7, rank: 7, name: "Amon-Ra St. Brown", pos: "WR", team: "DET" },
+      { id: 8, rank: 8, name: "CeeDee Lamb", pos: "WR", team: "DAL" },
+      { id: 9, rank: 9, name: "Jonathan Taylor", pos: "RB", team: "IND" },
+      { id: 10, rank: 10, name: "Josh Allen", pos: "QB", team: "BUF" },
+      { id: 11, rank: 11, name: "Justin Jefferson", pos: "WR", team: "MIN" },
+      { id: 12, rank: 12, name: "Brock Bowers", pos: "TE", team: "LV" },
+      { id: 13, rank: 13, name: "Trey McBride", pos: "TE", team: "ARI" },
+      { id: 14, rank: 14, name: "Lamar Jackson", pos: "QB", team: "BAL" },
+      { id: 15, rank: 15, name: "Nico Collins", pos: "WR", team: "HOU" },
+      { id: 16, rank: 16, name: "Drake London", pos: "WR", team: "ATL" },
+      { id: 17, rank: 17, name: "James Cook", pos: "RB", team: "BUF" },
+      { id: 18, rank: 18, name: "De'Von Achane", pos: "RB", team: "MIA" },
+      { id: 19, rank: 19, name: "Joe Burrow", pos: "QB", team: "CIN" },
+      { id: 20, rank: 20, name: "Ashton Jeanty", pos: "RB", team: "LV" },
+      { id: 21, rank: 21, name: "Drake Maye", pos: "QB", team: "NE" },
+      { id: 22, rank: 22, name: "Jayden Daniels", pos: "QB", team: "WAS" },
+      { id: 23, rank: 23, name: "Colston Loveland", pos: "TE", team: "CHI" },
+      { id: 24, rank: 24, name: "Tyler Warren", pos: "TE", team: "IND" }
+    ];
+
+    let currentPos = 'ALL';
+    let drafted = new Set(JSON.parse(localStorage.getItem('draft_2026_state') || '[]'));
+
+    function toggle(id) {
+      if (drafted.has(id)) {
+        drafted.delete(id);
+      } else {
+        drafted.add(id);
+      }
+      localStorage.setItem('draft_2026_state', JSON.stringify([...drafted]));
+      render();
+    }
+
+    function setPos(pos) {
+      currentPos = pos;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.toggle('active', b.innerText === pos);
+      });
+      render();
+    }
+
+    function clearAll() {
+      if (confirm('¿Restablecer todos los jugadores?')) {
+        drafted.clear();
+        localStorage.removeItem('draft_2026_state');
+        render();
+      }
+    }
+
+    function render() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const list = document.getElementById('playerList');
+      list.innerHTML = '';
+
+      const items = players.filter(p => {
+        const matchesP = currentPos === 'ALL' || p.pos === currentPos;
+        const matchesQ = p.name.toLowerCase().includes(q);
+        return matchesP && matchesQ;
+      }).sort((a, b) => {
+        const aDrafted = drafted.has(a.id);
+        const bDrafted = drafted.has(b.id);
+        if (aDrafted === bDrafted) return a.rank - b.rank;
+        return aDrafted ? 1 : -1;
+      });
+
+      items.forEach(p => {
+        const isDrafted = drafted.has(p.id);
+        const div = document.createElement('div');
+        div.className = `card ${p.pos} ${isDrafted ? 'drafted' : ''}`;
+        div.onclick = () => toggle(p.id);
+        div.innerHTML = `
+          <div class="card-left">
+            <span class="rank">${p.rank}</span>
+            <div>
+              <div class="name">${p.name}</div>
+              <div class="sub">${p.pos} • ${p.team}</div>
+            </div>
+          </div>
+          <div class="box">${isDrafted ? '✓' : ''}</div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
